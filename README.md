@@ -9,7 +9,6 @@ To use it effectively, stare directly at the red pivot letter in the middle of e
 If you want to run it locally:
 
 ```
-clone the repo
 npm install
 npm run dev
 ```
