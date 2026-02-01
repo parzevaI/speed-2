@@ -220,6 +220,7 @@ const InputWrapper = styled.div`
 
 const ScrollWrapper = styled.div`
   flex: 1;
+  overflow: scroll;
 `;
 
 const WordBox = styled.textarea`
@@ -232,7 +233,6 @@ const WordBox = styled.textarea`
 `;
 
 const PlayBox = styled.div`
-  flex: 1;
   padding: 16px 24px;
   font: 16px/1.6 monospace;
   white-space: pre-wrap;
