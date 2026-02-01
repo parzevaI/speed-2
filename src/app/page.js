@@ -255,7 +255,8 @@ const ClickableWord = styled.span`
   background-color: ${({ $active }) =>
     $active ? 'rgba(255,0,0,0.12)' : 'transparent'};
   &:hover {
-    background-color: rgba(0,0,0,0.06);
+    background-color: ${({ $active }) =>
+      $active ? 'rgba(255,0,0,0.18)' : 'rgba(0,0,0,0.06)'};
   }
 `;
 
