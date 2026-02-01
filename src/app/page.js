@@ -11,7 +11,7 @@ function Home() {
   const [wpm, setWpm] = React.useState(250);
 
   const [wordsInput, setWordsInput] = React.useState("insert text here");
-  const [wordList, setWordList] = React.useState(["insert", "text", "here"]);
+  const [wordStreamList, setWordStreamList] = React.useState(["insert", "text", "here"]);
   const [wordPositions, setWordPositions] = React.useState([]);
 
   const [editorMode, setEditorMode] = React.useState('edit');
@@ -19,17 +19,25 @@ function Home() {
   const timeoutRef = React.useRef(null);
   const textareaRef = React.useRef(null);
 
+  // Keep derived data in sync with text input
+  React.useEffect(() => {
+    const split = wordsInput.split(/\s+/);
+    setWordStreamList(split);
+    setWordPositions(computeWordPositions(wordsInput));
+  }, [wordsInput]);
+
+  // Playback timing
   React.useEffect(() => {
     if (!isPlaying) return;
 
-    const word = wordList[wordIndex];
+    const word = wordStreamList[wordIndex];
     if (!word) return;
 
     const duration = getDuration(word, wpm);
 
     timeoutRef.current = setTimeout(() => {
       setWordIndex((prev) => {
-        if (prev >= wordList.length - 1) {
+        if (prev >= wordStreamList.length - 1) {
           setIsPlaying(false);
           return prev;
         }
@@ -38,49 +46,58 @@ function Home() {
     }, duration);
 
     return () => clearTimeout(timeoutRef.current);
-  }, [isPlaying, wordIndex, wpm, wordList]);
+  }, [isPlaying, wordIndex, wpm, wordStreamList]);
 
-  // When the active word changes during playback, select it in the textarea
+  // Select active word in textarea during playback
   React.useEffect(() => {
     if (!isPlaying) return;
     const pos = wordPositions[wordIndex];
     const el = textareaRef.current;
     if (!el || !pos) return;
-    // Focus so selection is visible but avoid jumping the page
+
     el.focus({ preventScroll: true });
     el.setSelectionRange(pos.start, pos.end);
   }, [wordIndex, isPlaying, wordPositions]);
 
-  // Keep parsed words in sync when entering play mode so clicks map correctly
+  // Spacebar play/pause
   React.useEffect(() => {
-    if (editorMode === 'play') {
-      updateWordList();
-    }
+    const handleKeyPress = (event) => {
+      if (event.code === 'Space' && editorMode === "play") {
+        event.preventDefault();
+        setIsPlaying((prev) => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [editorMode]);
 
   return (
     <Wrapper>
       <TextStream>
-        {formatted(wordList[wordIndex])}
+        {formatted(wordStreamList[wordIndex])}
       </TextStream>
+
       <InputWrapper>
-        <Button onClick={() => {
-          updateWordList();
-          setIsPlaying((prev) => !prev);
-          setEditorMode("play");
-        }}>
+        <Button
+          onClick={() => {
+            setIsPlaying((prev) => !prev);
+            setEditorMode("play");
+          }}
+        >
           {isPlaying ? "Pause" : "Play"}
         </Button>
+
         <Button
           onClick={() => {
             setIsPlaying(false);
-            updateWordList();
             setWordIndex(0);
             setEditorMode("play");
           }}
         >
           Reset
         </Button>
+
         <Slider
           type="range"
           min="10"
@@ -89,11 +106,12 @@ function Home() {
           name="wpm"
           value={wpm}
           onChange={(event) => {
-            setWpm(Number(event.target.value))
+            setWpm(Number(event.target.value));
           }}
         />
+
         <Wpm htmlFor="wpm">{wpm} wpm</Wpm>
-        <Time>{formatTime(wordList.length / (wpm / 60))}</Time>
+        <Time>{formatTime(wordStreamList.length / (wpm / 60))}</Time>
 
         <ModeToggle>
           <ToggleButton
@@ -113,60 +131,52 @@ function Home() {
 
       <ScrollWrapper>
         {editorMode === 'edit' ? (
-          <WordBox 
+          <WordBox
             ref={textareaRef}
             value={wordsInput}
             onChange={(event) => {
-              setWordsInput(event.target.value)
+              setWordsInput(event.target.value);
             }}
           />
         ) : (
           <PlayBox>
             {renderClickableText(wordsInput, (idx) => {
-              if (idx < 0 || idx >= wordList.length) return;
+              if (idx < 0 || idx >= wordStreamList.length) return;
               setWordIndex(idx);
             })}
           </PlayBox>
         )}
       </ScrollWrapper>
     </Wrapper>
-  )
+  );
 
+  // ---------- helpers ----------
 
-  // functions
   function formatted(word) {
-    const focalIndex = findOVPIndex(word) // flower = 5
+    const focalIndex = findOVPIndex(word);
 
     return (
       <>
-        <WordBoundery style={{textAlign: 'right'}}>
+        <WordBoundery style={{ textAlign: 'right' }}>
           {word.slice(0, focalIndex)}
         </WordBoundery>
-
         <FocalLetter>{word.at(focalIndex)}</FocalLetter>
-
         <WordBoundery>
-          {word.slice(focalIndex+1)}
+          {word.slice(focalIndex + 1)}
         </WordBoundery>
       </>
-    )
+    );
   }
 
-  function updateWordList() {
-    const split = wordsInput.split(/\s+/); // split by space, tab, or newline
-    setWordList(split);
-    setWordPositions(computeWordPositions(wordsInput));
-  }
-
-  // Render text preserving whitespace segments, making words clickable
   function renderClickableText(source, onWordClick) {
     const tokens = source.split(/(\s+)/);
     let runningWordIdx = 0;
+
     return tokens.map((tok, i) => {
       if (tok.match(/^\s+$/)) {
-        // whitespace: render as-is to preserve layout
         return <span key={i}>{tok}</span>;
       }
+
       const idxForThisWord = runningWordIdx++;
       return (
         <ClickableWord
@@ -181,18 +191,19 @@ function Home() {
     });
   }
 
-  // Compute the start/end character indices of each word in the textarea value
   function computeWordPositions(source) {
     const matches = [...source.matchAll(/\S+/g)];
-    return matches.map((m) => ({ start: m.index, end: m.index + m[0].length }));
+    return matches.map((m) => ({
+      start: m.index,
+      end: m.index + m[0].length,
+    }));
   }
 }
 
-
-// styles
+// ---------- styles ----------
 
 const Wrapper = styled.div`
-  height: 100%; 
+  height: 100%;
   display: flex;
   flex-direction: column;
 `;
@@ -201,7 +212,6 @@ const TextStream = styled.div`
   color: black;
   font-size: 2rem;
   font-family: monospace;
-
   display: flex;
   align-items: center;
   padding-block: 32px;
@@ -210,11 +220,9 @@ const TextStream = styled.div`
 
 const InputWrapper = styled.div`
   padding: 32px;
-
   display: flex;
   align-items: center;
   gap: 16px;
-
   border-block: 2px solid black;
 `;
 
@@ -242,9 +250,10 @@ const PlayBox = styled.div`
 const ClickableWord = styled.span`
   cursor: pointer;
   border-radius: 4px;
-  padding: 0; /* avoid altering spacing compared to raw text */
+  padding: 0;
   transition: background-color 120ms ease-in-out;
-  background-color: ${({ $active }) => ($active ? 'rgba(255,0,0,0.12)' : 'transparent')};
+  background-color: ${({ $active }) =>
+    $active ? 'rgba(255,0,0,0.12)' : 'transparent'};
   &:hover {
     background-color: rgba(0,0,0,0.06);
   }
@@ -291,4 +300,4 @@ const FocalLetter = styled.span`
   color: red;
 `;
 
-export default Home
+export default Home;
