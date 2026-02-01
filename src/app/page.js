@@ -14,7 +14,6 @@ function Home() {
   const [wordList, setWordList] = React.useState(["insert", "text", "here"]);
   const [wordPositions, setWordPositions] = React.useState([]);
 
-  // 'edit' => textarea, 'play' => rendered clickable text
   const [editorMode, setEditorMode] = React.useState('edit');
 
   const timeoutRef = React.useRef(null);
@@ -61,13 +60,14 @@ function Home() {
 
   return (
     <Wrapper>
-      <Text>
+      <TextStream>
         {formatted(wordList[wordIndex])}
-      </Text>
+      </TextStream>
       <InputWrapper>
         <Button onClick={() => {
           updateWordList();
           setIsPlaying((prev) => !prev);
+          setEditorMode("play");
         }}>
           {isPlaying ? "Pause" : "Play"}
         </Button>
@@ -76,6 +76,7 @@ function Home() {
             setIsPlaying(false);
             updateWordList();
             setWordIndex(0);
+            setEditorMode("play");
           }}
         >
           Reset
@@ -110,22 +111,24 @@ function Home() {
         </ModeToggle>
       </InputWrapper>
 
-      {editorMode === 'edit' ? (
-        <WordBox 
-          ref={textareaRef}
-          value={wordsInput}
-          onChange={(event) => {
-            setWordsInput(event.target.value)
-          }}
-        />
-      ) : (
-        <PlayBox>
-          {renderClickableText(wordsInput, (idx) => {
-            if (idx < 0 || idx >= wordList.length) return;
-            setWordIndex(idx);
-          })}
-        </PlayBox>
-      )}
+      <ScrollWrapper>
+        {editorMode === 'edit' ? (
+          <WordBox 
+            ref={textareaRef}
+            value={wordsInput}
+            onChange={(event) => {
+              setWordsInput(event.target.value)
+            }}
+          />
+        ) : (
+          <PlayBox>
+            {renderClickableText(wordsInput, (idx) => {
+              if (idx < 0 || idx >= wordList.length) return;
+              setWordIndex(idx);
+            })}
+          </PlayBox>
+        )}
+      </ScrollWrapper>
     </Wrapper>
   )
 
@@ -194,17 +197,15 @@ const Wrapper = styled.div`
   flex-direction: column;
 `;
 
-const Text = styled.div`
+const TextStream = styled.div`
   color: black;
   font-size: 2rem;
   font-family: monospace;
-  flex: 1;
 
   display: flex;
   align-items: center;
   padding-block: 32px;
-  height: fit-content;
-  flex: 1;
+  height: 200px;
 `;
 
 const InputWrapper = styled.div`
@@ -217,8 +218,13 @@ const InputWrapper = styled.div`
   border-block: 2px solid black;
 `;
 
-const WordBox = styled.textarea`
+const ScrollWrapper = styled.div`
   flex: 1;
+`;
+
+const WordBox = styled.textarea`
+  height: 100%;
+  width: 100%;
   border: none;
   padding: 16px 24px;
   font: 16px/1.6 monospace;
@@ -236,7 +242,7 @@ const PlayBox = styled.div`
 const ClickableWord = styled.span`
   cursor: pointer;
   border-radius: 4px;
-  padding: 0 2px;
+  padding: 0; /* avoid altering spacing compared to raw text */
   transition: background-color 120ms ease-in-out;
   background-color: ${({ $active }) => ($active ? 'rgba(255,0,0,0.12)' : 'transparent')};
   &:hover {
