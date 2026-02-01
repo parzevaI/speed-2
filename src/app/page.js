@@ -14,6 +14,9 @@ function Home() {
   const [wordList, setWordList] = React.useState(["insert", "text", "here"]);
   const [wordPositions, setWordPositions] = React.useState([]);
 
+  // 'edit' => textarea, 'play' => rendered clickable text
+  const [editorMode, setEditorMode] = React.useState('edit');
+
   const timeoutRef = React.useRef(null);
   const textareaRef = React.useRef(null);
 
@@ -49,6 +52,12 @@ function Home() {
     el.setSelectionRange(pos.start, pos.end);
   }, [wordIndex, isPlaying, wordPositions]);
 
+  // Keep parsed words in sync when entering play mode so clicks map correctly
+  React.useEffect(() => {
+    if (editorMode === 'play') {
+      updateWordList();
+    }
+  }, [editorMode]);
 
   return (
     <Wrapper>
@@ -57,16 +66,16 @@ function Home() {
       </Text>
       <InputWrapper>
         <Button onClick={() => {
-          updateWordList()
+          updateWordList();
           setIsPlaying((prev) => !prev);
         }}>
           {isPlaying ? "Pause" : "Play"}
         </Button>
         <Button
           onClick={() => {
-            setIsPlaying(false)
-            updateWordList()
-            setWordIndex(0)
+            setIsPlaying(false);
+            updateWordList();
+            setWordIndex(0);
           }}
         >
           Reset
@@ -84,14 +93,39 @@ function Home() {
         />
         <Wpm htmlFor="wpm">{wpm} wpm</Wpm>
         <Time>{formatTime(wordList.length / (wpm / 60))}</Time>
+
+        <ModeToggle>
+          <ToggleButton
+            $active={editorMode === 'edit'}
+            onClick={() => setEditorMode('edit')}
+          >
+            Edit
+          </ToggleButton>
+          <ToggleButton
+            $active={editorMode === 'play'}
+            onClick={() => setEditorMode('play')}
+          >
+            Play
+          </ToggleButton>
+        </ModeToggle>
       </InputWrapper>
-      <WordBox 
-        ref={textareaRef}
-        value={wordsInput}
-        onChange={(event) => {
-          setWordsInput(event.target.value)
-        }}
-      />
+
+      {editorMode === 'edit' ? (
+        <WordBox 
+          ref={textareaRef}
+          value={wordsInput}
+          onChange={(event) => {
+            setWordsInput(event.target.value)
+          }}
+        />
+      ) : (
+        <PlayBox>
+          {renderClickableText(wordsInput, (idx) => {
+            if (idx < 0 || idx >= wordList.length) return;
+            setWordIndex(idx);
+          })}
+        </PlayBox>
+      )}
     </Wrapper>
   )
 
@@ -121,6 +155,29 @@ function Home() {
     setWordPositions(computeWordPositions(wordsInput));
   }
 
+  // Render text preserving whitespace segments, making words clickable
+  function renderClickableText(source, onWordClick) {
+    const tokens = source.split(/(\s+)/);
+    let runningWordIdx = 0;
+    return tokens.map((tok, i) => {
+      if (tok.match(/^\s+$/)) {
+        // whitespace: render as-is to preserve layout
+        return <span key={i}>{tok}</span>;
+      }
+      const idxForThisWord = runningWordIdx++;
+      return (
+        <ClickableWord
+          key={i}
+          onClick={() => onWordClick(idxForThisWord)}
+          $active={idxForThisWord === wordIndex}
+          aria-label={`Jump to word ${idxForThisWord + 1}`}
+        >
+          {tok}
+        </ClickableWord>
+      );
+    });
+  }
+
   // Compute the start/end character indices of each word in the textarea value
   function computeWordPositions(source) {
     const matches = [...source.matchAll(/\S+/g)];
@@ -148,7 +205,7 @@ const Text = styled.div`
   padding-block: 32px;
   height: fit-content;
   flex: 1;
-`
+`;
 
 const InputWrapper = styled.div`
   padding: 32px;
@@ -163,16 +220,54 @@ const InputWrapper = styled.div`
 const WordBox = styled.textarea`
   flex: 1;
   border: none;
+  padding: 16px 24px;
+  font: 16px/1.6 monospace;
+  outline: none;
+`;
+
+const PlayBox = styled.div`
+  flex: 1;
+  padding: 16px 24px;
+  font: 16px/1.6 monospace;
+  white-space: pre-wrap;
+  user-select: text;
+`;
+
+const ClickableWord = styled.span`
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 2px;
+  transition: background-color 120ms ease-in-out;
+  background-color: ${({ $active }) => ($active ? 'rgba(255,0,0,0.12)' : 'transparent')};
+  &:hover {
+    background-color: rgba(0,0,0,0.06);
+  }
 `;
 
 const Button = styled.button`
   width: 100px;
-  height: 50px;;
+  height: 50px;
 `;
 
-const Slider = styled.input`
-
+const ModeToggle = styled.div`
+  margin-left: auto;
+  display: inline-flex;
+  border: 1px solid black;
+  border-radius: 6px;
+  overflow: hidden;
 `;
+
+const ToggleButton = styled.button`
+  appearance: none;
+  border: 0;
+  background: ${({ $active }) => ($active ? 'black' : 'transparent')};
+  color: ${({ $active }) => ($active ? 'white' : 'black')};
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+`;
+
+const Slider = styled.input``;
 
 const Wpm = styled.label`
   font-family: Arial;
