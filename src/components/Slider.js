@@ -5,24 +5,27 @@ function Slider(props) {
 }
 
 const StyledSlider = styled.input`
+  --thumb-size: 16px;
+  --track-height: 4px;
+
   -webkit-appearance: none;
   appearance: none;
   width: 120px;
-  height: 4px;
-  background: var(--control-bg);
-  border-radius: 2px;
+  height: var(--thumb-size);
+  background: transparent;
   outline: none;
   cursor: pointer;
 
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
     border: none;
+    margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
     transition: transform 150ms ease;
   }
 
@@ -31,8 +34,8 @@ const StyledSlider = styled.input`
   }
 
   &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
@@ -40,12 +43,13 @@ const StyledSlider = styled.input`
   }
 
   &::-webkit-slider-runnable-track {
-    height: 4px;
+    height: var(--track-height);
+    background: var(--control-bg);
     border-radius: 2px;
   }
 
   &::-moz-range-track {
-    height: 4px;
+    height: var(--track-height);
     background: var(--control-bg);
     border-radius: 2px;
   }
