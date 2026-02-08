@@ -72,11 +72,19 @@ function Home() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [editorMode]);
 
+  const progress = wordStreamList.length > 1
+    ? (wordIndex / (wordStreamList.length - 1)) * 100
+    : 0;
+
   return (
     <Wrapper>
       <TextStream>
         {formatted(wordStreamList[wordIndex])}
       </TextStream>
+
+      <ProgressBar>
+        <ProgressFill style={{ width: `${progress}%` }} />
+      </ProgressBar>
 
       <InputWrapper>
         <Button
@@ -89,6 +97,7 @@ function Home() {
         </Button>
 
         <Button
+          $secondary
           onClick={() => {
             setIsPlaying(false);
             setWordIndex(0);
@@ -111,6 +120,7 @@ function Home() {
         />
 
         <Wpm htmlFor="wpm">{wpm} wpm</Wpm>
+        <WordCount>{wordIndex + 1} / {wordStreamList.length.toLocaleString()}</WordCount>
         <Time>{formatTime(wordStreamList.length / (wpm / 60))}</Time>
 
         <ModeToggle>
@@ -204,45 +214,80 @@ function Home() {
 
 const Wrapper = styled.div`
   height: 100%;
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  padding: 24px 16px 0;
 `;
 
 const TextStream = styled.div`
-  color: black;
-  font-size: 2rem;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: var(--text);
+  font-size: 2.5rem;
   font-family: monospace;
   display: flex;
   align-items: center;
-  padding-block: 32px;
-  height: 200px;
+  padding: 40px 32px;
+  min-height: 140px;
+`;
+
+const ProgressBar = styled.div`
+  height: 3px;
+  background: var(--control-bg);
+  border-radius: 2px;
+  margin: 12px 0;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div`
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 150ms ease-out;
 `;
 
 const InputWrapper = styled.div`
-  padding: 32px;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: 16px 24px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  border-block: 2px solid black;
+  gap: 12px;
+  flex-wrap: wrap;
 `;
 
 const ScrollWrapper = styled.div`
   flex: 1;
-  overflow: scroll;
+  overflow: auto;
+  margin-top: 12px;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
 `;
 
 const WordBox = styled.textarea`
   height: 100%;
   width: 100%;
   border: none;
-  padding: 16px 24px;
-  font: 16px/1.6 monospace;
+  padding: 20px 24px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
+  background: transparent;
   outline: none;
+  resize: none;
 `;
 
 const PlayBox = styled.div`
-  padding: 16px 24px;
-  font: 16px/1.6 monospace;
+  padding: 20px 24px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
   white-space: pre-wrap;
   user-select: text;
 `;
@@ -250,47 +295,122 @@ const PlayBox = styled.div`
 const ClickableWord = styled.span`
   cursor: pointer;
   border-radius: 4px;
-  padding: 0;
+  padding: 1px 2px;
   transition: background-color 120ms ease-in-out;
   background-color: ${({ $active }) =>
-    $active ? 'rgba(255,0,0,0.12)' : 'transparent'};
+    $active ? 'rgba(230, 57, 70, 0.15)' : 'transparent'};
   &:hover {
     background-color: ${({ $active }) =>
-      $active ? 'rgba(255,0,0,0.18)' : 'rgba(0,0,0,0.06)'};
+      $active ? 'rgba(230, 57, 70, 0.25)' : 'rgba(0, 0, 0, 0.05)'};
   }
 `;
 
 const Button = styled.button`
-  width: 100px;
-  height: 50px;
+  appearance: none;
+  border: ${({ $secondary }) => $secondary ? '1.5px solid var(--accent)' : 'none'};
+  background: ${({ $secondary }) => $secondary ? 'transparent' : 'var(--accent)'};
+  color: ${({ $secondary }) => $secondary ? 'var(--accent)' : '#ffffff'};
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: ${({ $secondary }) => $secondary ? 'var(--accent)' : 'var(--accent-hover)'};
+    color: #ffffff;
+  }
 `;
 
 const ModeToggle = styled.div`
   margin-left: auto;
   display: inline-flex;
-  border: 1px solid black;
-  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
   overflow: hidden;
 `;
 
 const ToggleButton = styled.button`
   appearance: none;
   border: 0;
-  background: ${({ $active }) => ($active ? 'black' : 'transparent')};
-  color: ${({ $active }) => ($active ? 'white' : 'black')};
-  padding: 8px 12px;
-  font-size: 14px;
+  background: ${({ $active }) => ($active ? 'var(--accent)' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#ffffff' : 'var(--text-muted)')};
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? 'var(--accent-hover)' : 'var(--control-bg)')};
+  }
 `;
 
-const Slider = styled.input``;
+const Slider = styled.input`
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background: var(--control-bg);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    transition: transform 150ms ease;
+  }
+
+  &::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  &::-moz-range-track {
+    height: 4px;
+    background: var(--control-bg);
+    border-radius: 2px;
+  }
+`;
 
 const Wpm = styled.label`
-  font-family: Arial;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+`;
+
+const WordCount = styled.span`
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
 `;
 
 const Time = styled.p`
-  font-family: Arial;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
 `;
 
 const WordBoundery = styled.div`
@@ -298,7 +418,7 @@ const WordBoundery = styled.div`
 `;
 
 const FocalLetter = styled.span`
-  color: red;
+  color: var(--accent);
 `;
 
 export default Home;

@@ -1,13 +1,13 @@
 :root {
-  --background: #ffffff;
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --accent: #e63946;
+  --accent-hover: #c1121f;
+  --border: #e5e7eb;
+  --control-bg: #f1f3f5;
 }
-
-/* @media (prefers-color-scheme: dark) { */
-/*   :root { */
-/*     --background: #0a0a0a; */
-/*     --foreground: #ededed; */
-/*   } */
-/* } */
 
 html,
 body {
@@ -17,8 +17,8 @@ body {
 }
 
 body {
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -28,4 +28,3 @@ body {
   padding: 0;
   margin: 0;
 }
-
