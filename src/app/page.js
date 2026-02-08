@@ -4,6 +4,7 @@ import React from 'react';
 
 import { findOVPIndex, getDuration } from '@/utils/focal';
 import { formatTime } from '@/utils/utils.js';
+import Button from '@/components/Button';
 
 function Home() {
   const [wordIndex, setWordIndex] = React.useState(0);
@@ -88,6 +89,7 @@ function Home() {
 
       <InputWrapper>
         <Button
+          variant="primary"
           onClick={() => {
             setIsPlaying((prev) => !prev);
             setEditorMode("play");
@@ -97,7 +99,7 @@ function Home() {
         </Button>
 
         <Button
-          $secondary
+          variant="secondary"
           onClick={() => {
             setIsPlaying(false);
             setWordIndex(0);
@@ -302,24 +304,6 @@ const ClickableWord = styled.span`
   &:hover {
     background-color: ${({ $active }) =>
       $active ? 'rgba(230, 57, 70, 0.25)' : 'rgba(0, 0, 0, 0.05)'};
-  }
-`;
-
-const Button = styled.button`
-  appearance: none;
-  border: ${({ $secondary }) => $secondary ? '1.5px solid var(--accent)' : 'none'};
-  background: ${({ $secondary }) => $secondary ? 'transparent' : 'var(--accent)'};
-  color: ${({ $secondary }) => $secondary ? 'var(--accent)' : '#ffffff'};
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-
-  &:hover {
-    background: ${({ $secondary }) => $secondary ? 'var(--accent)' : 'var(--accent-hover)'};
-    color: #ffffff;
   }
 `;
 
