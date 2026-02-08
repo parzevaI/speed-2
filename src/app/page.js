@@ -1,11 +1,19 @@
 'use client';
 import styled from 'styled-components';
 import React from 'react';
-import { motion } from 'motion/react';
 
-import { findOVPIndex, getDuration } from '@/utils/focal';
+import { getDuration } from '@/utils/focal';
 import { formatTime } from '@/utils/utils.js';
 import Button from '@/components/Button';
+import ProgressBar from '@/components/ProgressBar';
+import ToggleGroup from '@/components/ToggleGroup';
+import Slider from '@/components/Slider';
+import WordDisplay from '@/components/WordDisplay';
+
+const modeOptions = [
+  { label: 'Edit', value: 'edit' },
+  { label: 'Play', value: 'play' },
+];
 
 function Home() {
   const [wordIndex, setWordIndex] = React.useState(0);
@@ -80,16 +88,9 @@ function Home() {
 
   return (
     <Wrapper>
-      <TextStream>
-        {formatted(wordStreamList[wordIndex])}
-      </TextStream>
+      <WordDisplay word={wordStreamList[wordIndex]} />
 
-      <ProgressBar>
-        <ProgressFill
-          animate={{ width: `${progress}%` }}
-          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-        />
-      </ProgressBar>
+      <ProgressBar value={progress} />
 
       <InputWrapper>
         <Button
@@ -114,7 +115,6 @@ function Home() {
         </Button>
 
         <Slider
-          type="range"
           min="10"
           max="900"
           step="10"
@@ -129,20 +129,11 @@ function Home() {
         <WordCount>{wordIndex + 1} / {wordStreamList.length.toLocaleString()}</WordCount>
         <Time>{formatTime(wordStreamList.length / (wpm / 60))}</Time>
 
-        <ModeToggle>
-          <ToggleButton
-            $active={editorMode === 'edit'}
-            onClick={() => setEditorMode('edit')}
-          >
-            Edit
-          </ToggleButton>
-          <ToggleButton
-            $active={editorMode === 'play'}
-            onClick={() => setEditorMode('play')}
-          >
-            Play
-          </ToggleButton>
-        </ModeToggle>
+        <ToggleGroup
+          options={modeOptions}
+          value={editorMode}
+          onChange={setEditorMode}
+        />
       </InputWrapper>
 
       <ScrollWrapper>
@@ -167,22 +158,6 @@ function Home() {
   );
 
   // ---------- helpers ----------
-
-  function formatted(word) {
-    const focalIndex = findOVPIndex(word);
-
-    return (
-      <>
-        <WordBoundery style={{ textAlign: 'right' }}>
-          {word.slice(0, focalIndex)}
-        </WordBoundery>
-        <FocalLetter>{word.at(focalIndex)}</FocalLetter>
-        <WordBoundery>
-          {word.slice(focalIndex + 1)}
-        </WordBoundery>
-      </>
-    );
-  }
 
   function renderClickableText(source, onWordClick) {
     const tokens = source.split(/(\s+)/);
@@ -225,33 +200,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   padding: 24px 16px 0;
-`;
-
-const TextStream = styled.div`
-  background: var(--surface);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  color: var(--text);
-  font-size: 2.5rem;
-  font-family: monospace;
-  display: flex;
-  align-items: center;
-  padding: 40px 32px;
-  min-height: 140px;
-`;
-
-const ProgressBar = styled.div`
-  height: 3px;
-  background: var(--control-bg);
-  border-radius: 2px;
-  margin: 12px 0;
-  overflow: hidden;
-`;
-
-const ProgressFill = styled(motion.div)`
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
 `;
 
 const InputWrapper = styled.div`
@@ -311,77 +259,6 @@ const ClickableWord = styled.span`
   }
 `;
 
-const ModeToggle = styled.div`
-  margin-left: auto;
-  display: inline-flex;
-  border: 1.5px solid var(--border);
-  border-radius: 20px;
-  overflow: hidden;
-`;
-
-const ToggleButton = styled.button`
-  appearance: none;
-  border: 0;
-  background: ${({ $active }) => ($active ? 'var(--accent)' : 'transparent')};
-  color: ${({ $active }) => ($active ? '#ffffff' : 'var(--text-muted)')};
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-
-  &:hover {
-    background: ${({ $active }) => ($active ? 'var(--accent-hover)' : 'var(--control-bg)')};
-  }
-`;
-
-const Slider = styled.input`
-  -webkit-appearance: none;
-  appearance: none;
-  width: 120px;
-  height: 4px;
-  background: var(--control-bg);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: none;
-    transition: transform 150ms ease;
-  }
-
-  &::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-  }
-
-  &::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    border: none;
-  }
-
-  &::-webkit-slider-runnable-track {
-    height: 4px;
-    border-radius: 2px;
-  }
-
-  &::-moz-range-track {
-    height: 4px;
-    background: var(--control-bg);
-    border-radius: 2px;
-  }
-`;
-
 const Wpm = styled.label`
   font-size: 14px;
   font-weight: 500;
@@ -399,14 +276,6 @@ const Time = styled.p`
   font-size: 13px;
   color: var(--text-muted);
   white-space: nowrap;
-`;
-
-const WordBoundery = styled.div`
-  flex: 1;
-`;
-
-const FocalLetter = styled.span`
-  color: var(--accent);
 `;
 
 export default Home;
