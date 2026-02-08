@@ -298,7 +298,7 @@ const PlayBox = styled.div`
 const ClickableWord = styled.span`
   cursor: pointer;
   border-radius: 4px;
-  padding: 1px 2px;
+  padding: 1px 0;
   transition: background-color 120ms ease-in-out;
   background-color: ${({ $active }) =>
     $active ? 'rgba(230, 57, 70, 0.15)' : 'transparent'};
