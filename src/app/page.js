@@ -126,7 +126,6 @@ function Home() {
         />
 
         <Wpm htmlFor="wpm">{wpm} wpm</Wpm>
-        <WordCount>{wordIndex + 1} / {wordStreamList.length.toLocaleString()}</WordCount>
         <Time>{formatTime(wordStreamList.length / (wpm / 60))}</Time>
 
         <ToggleGroup
