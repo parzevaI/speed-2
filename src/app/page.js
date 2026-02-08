@@ -1,6 +1,7 @@
 'use client';
 import styled from 'styled-components';
 import React from 'react';
+import { motion } from 'motion/react';
 
 import { findOVPIndex, getDuration } from '@/utils/focal';
 import { formatTime } from '@/utils/utils.js';
@@ -84,7 +85,10 @@ function Home() {
       </TextStream>
 
       <ProgressBar>
-        <ProgressFill style={{ width: `${progress}%` }} />
+        <ProgressFill
+          animate={{ width: `${progress}%` }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+        />
       </ProgressBar>
 
       <InputWrapper>
@@ -244,11 +248,10 @@ const ProgressBar = styled.div`
   overflow: hidden;
 `;
 
-const ProgressFill = styled.div`
+const ProgressFill = styled(motion.div)`
   height: 100%;
   background: var(--accent);
   border-radius: 2px;
-  transition: width 150ms ease-out;
 `;
 
 const InputWrapper = styled.div`
