@@ -277,6 +277,7 @@ const WordBox = styled.textarea`
   width: 100%;
   border: none;
   padding: 20px 24px;
+  font-family: inherit;
   font-size: 16px;
   line-height: 1.8;
   color: var(--text);
